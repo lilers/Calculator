@@ -18,24 +18,29 @@ class ViewController: UIViewController {
     
     let formatter = Formatter()
     let defaults = NSUserDefaults.standardUserDefaults()
+    var backgroundObserv: AnyObject?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         self.title = "Tip Calculator"
-        getSavedData()
-        //billField.becomeFirstResponder()
-        //print(NSDate().minute())
-        /*let firstLaunch = defaults.boolForKey("firstLaunch")
-        if (firstLaunch == true) {
-            print("not")
-            defaults.setObject(NSDate(), forKey: "start")
-            defaults.setBool(false, forKey: "firstLaunch")
-        } else {
-            print("launch")
-            let time = NSDate().getTimeDifference(defaults.objectForKey("start") as! NSDate)
-            print(time)
-        }*/
+        billField.becomeFirstResponder()
+        let notifCenter = NSNotificationCenter.defaultCenter()
+        let operationQue = NSOperationQueue.mainQueue()
+        self.backgroundObserv = notifCenter.addObserverForName(UIApplicationDidBecomeActiveNotification, object: nil, queue: operationQue, usingBlock: { (notification: NSNotification!) -> Void in
+            let startTime = self.defaults.objectForKey("timer") as? NSDate
+            print(startTime)
+            let elapsedTime = NSDate().getTimeDifference(startTime!)
+            print(elapsedTime)
+            if (elapsedTime < 1) {
+                print("w")
+                self.getSavedData()
+            }
+        })
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self.backgroundObserv!)
     }
 
     override func didReceiveMemoryWarning() {
@@ -57,12 +62,8 @@ class ViewController: UIViewController {
         
         defaults.setObject(billAmount, forKey: "billAmount")
         defaults.setObject(tipAmount, forKey: "tipAmount")
-        defaults.setDouble(0.00, forKey: "tip")
-        defaults.setDouble(0.00, forKey: "total")
-        //print(defaults.stringForKey("billAmount"))
-        print(defaults.objectForKey("billAmount")!)
-        print(defaults.doubleForKey("tip"))
-        print(defaults.doubleForKey("total"))
+        defaults.setDouble(tip, forKey: "tip")
+        defaults.setDouble(total, forKey: "total")
     }
     
     @IBAction func billAmountEntered(sender: AnyObject) {
@@ -78,19 +79,14 @@ class ViewController: UIViewController {
     }
     
     func getSavedData() {
-        /*if let billAmount = defaults.stringForKey("billAmount") {
-            billField.text = billAmount
-        } else {
-            billField.text = ""
-        }*/
-        //print(billField.text)
-        //tipField.text = defaults.stringForKey("tipAmount")
+        billField.text = defaults.stringForKey("billAmount")
+        tipField.text = defaults.stringForKey("tipAmount")
         
         let tip = defaults.doubleForKey("tip")
         let total = defaults.doubleForKey("total")
-        tipLabel.text = tip as? String
-        //tipLabel.text = formatter.formatTipAndTotal(tip, total: total).0
-        //totalLabel.text = formatter.formatTipAndTotal(tip, total: total).1
+        
+        tipLabel.text = formatter.formatTipAndTotal(tip, total: total).0
+        totalLabel.text = formatter.formatTipAndTotal(tip, total: total).1
     }
 }
 
